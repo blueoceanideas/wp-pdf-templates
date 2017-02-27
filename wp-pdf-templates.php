@@ -3,7 +3,7 @@
  * Plugin Name: WordPress PDF Templates
  * Plugin URI: https://github.com/anttiviljami/wp-pdf-templates
  * Description: This plugin utilises the DOMPDF Library to provide a URL endpoint e.g. /my-post/pdf/ that generates a downloadable PDF file.
- * Version: 1.4.3
+ * Version: 1.4.3.1
  * Author: @anttiviljami
  * Author URI: https://github.com/anttiviljami
  * License: GPLv3
@@ -49,7 +49,7 @@
 /**
  * Track plugin version number
  */
-define('WP_PDF_TEMPLATES_VERSION', '1.4.3');
+define('WP_PDF_TEMPLATES_VERSION', '1.4.3.1');
 
 /**
  * Option to disable PDF caching
@@ -265,7 +265,28 @@ function _use_pdf_template() {
       $html = apply_filters('pdf_template_html', $html);
 
       // pass for printing
-      _print_pdf($html);
+      $current_user = wp_get_current_user();
+      $allowed_roles = array(
+      	'administrator',
+      	'staff_administratorwpamm',
+      	'macpa_staff_product_administrator',
+      	'staff_user',
+      	'macpa_staff_user__blogger',
+      	'macpa_guest_blogger',
+      	'shop_manager'
+      );
+      $post_id = get_the_ID();
+      $user_id = get_post_meta( $post_id, '_user', true );
+
+      $allowed_ids = array(
+        $user_id
+      );
+
+      $output = get_query_var( 'output', 'certificate' );
+
+      if ( array_intersect( $allowed_roles, $current_user->roles ) || in_array( $current_user->ID, $allowed_ids ) ) {
+        _print_pdf($html);
+      }
 
     }
 
