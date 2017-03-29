@@ -360,10 +360,12 @@ function _print_pdf($html) {
   if (isset($wp_query->query_vars['pdf'])) {
     // convert to PDF
 
-    $title_sanitized = sanitize_file_name( get_the_title() );
-    $filename = $title_sanitized . '.pdf';
-    $cached = PDF_CACHE_DIRECTORY . $title_sanitized . '-' . substr(md5(get_the_modified_time()), -6) . '.pdf';
-
+    // $title_sanitized = sanitize_file_name( get_the_title() );
+    $pdf_post_id = get_the_ID();
+    $filename = $pdf_post_id . '.pdf';
+    $cached = PDF_CACHE_DIRECTORY . $pdf_post_id . '-' . substr(md5(get_the_modified_time()), -6) . '.pdf';
+    // echo $cached;
+    // echo file_exists($cached);
     // check if we need to generate PDF against cache
     if(( defined('DISABLE_PDF_CACHE') && DISABLE_PDF_CACHE ) || ( isset($_SERVER['HTTP_PRAGMA']) && $_SERVER['HTTP_PRAGMA'] == 'no-cache' ) || !file_exists($cached) ) {
 
