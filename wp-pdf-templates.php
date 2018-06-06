@@ -264,29 +264,41 @@ function _use_pdf_template() {
       // process the html output
       $html = apply_filters('pdf_template_html', $html);
 
-      // pass for printing
-      $current_user = wp_get_current_user();
-      $allowed_roles = array(
-      	'administrator',
-      	'staff_administratorwpamm',
-      	'macpa_staff_product_administrator',
-      	'staff_user',
-      	'macpa_staff_user__blogger',
-      	'macpa_guest_blogger',
-      	'shop_manager'
-      );
-      $post_id = get_the_ID();
-      $user_id = get_post_meta( $post_id, '_user', true );
+        // pass for printing
+        $TicketID                       = get_the_ID();
+        $ShopAsUserIDOrStaffFallback    = get_shop_as_user_or_fall_back_to_current_user()->ID;
+        $UserID                         = (int) get_post_meta($TicketID, '_user', true);
 
-      $allowed_ids = array(
-        $user_id
-      );
+        $LarutaEventTicket              = new Theme\Models\PostTypes\Tickets\LarutaEventTicket($TicketID);
+        $EventCertificateController     = new Theme\Controllers\EventCertificateController();
 
-      $output = get_query_var( 'output', 'certificate' );
+        $wasAttended                    = !empty($LarutaEventTicket) ? $LarutaEventTicket->wasAttended() : false ;
 
-      if ( array_intersect( $allowed_roles, $current_user->roles ) || in_array( $current_user->ID, $allowed_ids ) ) {
-        _print_pdf($html);
-      }
+        $output                         = get_query_var('output', 'certificate');
+
+        /**
+         *
+         */
+        if ( $ShopAsUserIDOrStaffFallback===$UserID || lrt_is_user_staff_override() ) {
+
+            if ('confirmation' === $output) {
+                // DOES NOT WORK WITH PDF ENDPOINTS!
+                $confirmation_email = LRT_Email_Ticket_Confirmation::init();
+                $message = $confirmation_email->get_email_message($TicketID); // ticket_id
+                echo $message;
+            } else if ('certificate' === $output) {
+
+                if ( lrt_is_user_staff_override() || $wasAttended ) {
+                    _print_pdf($html);
+                } else {
+                    echo $EventCertificateController->permissionsCheckpointMessage($TicketID);
+                }
+
+            }
+
+        } else {
+            echo $EventCertificateController->permissionsCheckpointMessage($TicketID);
+        }
 
     }
 
